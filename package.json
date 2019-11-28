@@ -1,7 +1,7 @@
 {
   "name": "vue-stomp-operator",
   "version": "1.0.0",
-  "description": "Vue Stomp and SockJS wrapper plugin ",
+  "description": "Vue Stomp and SockJS wrapper plugin",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
