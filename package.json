@@ -1,0 +1,26 @@
+{
+  "name": "vue-stomp-operator",
+  "version": "1.0.0",
+  "description": "Vue Stomp and SockJS wrapper plugin ",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ye0nyu/vue-stomp-operator.git"
+  },
+  "keywords": [
+    "vue",
+    "plugin",
+    "stompjs",
+    "sockjs",
+    "stomp"
+  ],
+  "author": "yeonyu",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/ye0nyu/vue-stomp-operator/issues"
+  },
+  "homepage": "https://github.com/ye0nyu/vue-stomp-operator#readme"
+}
