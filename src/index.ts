@@ -1,22 +1,21 @@
-import Vue, {VueConstructor} from 'vue';
-import {StompOperator} from '@/plugins/VueStompOperator/StompOperator';
-import {CombinedVueInstance} from 'vue/types/vue';
+import { VueConstructor } from 'vue';
+import StompOperator from './StompOperator'
+
+export * from './StompOperator'
+export * from './types'
 
 export default class VueStompOperator extends StompOperator {
-    static vso: StompOperator;
-
-    public static install(Vue: VueConstructor, args: {url: string}) {
-        const url = args.url;
-        if (Vue.prototype.$stomp) { return; }
-        // Vue.prototype.$stomp = new StompOperator(url);
-        const VSO = new VueStompOperator(url);
-        Object.defineProperty(Vue.prototype, '$stomp', {
-            get() {
+    public static install (Vue: VueConstructor, args: {name?: string, url: string}) {
+        const name = args.name ? ('$' + args.name) : '$stomp';
+        if (Vue.prototype[name]) { return; }
+        const VSO = new VueStompOperator(args.url);
+        Object.defineProperty(Vue.prototype, name, {
+            get () {
                 return VSO;
             },
         });
         Vue.mixin({
-            beforeCreate(): void {
+            beforeCreate (): void {
                 Vue.observable(VSO);
             },
         });
