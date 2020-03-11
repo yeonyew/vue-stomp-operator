@@ -1,6 +1,6 @@
 {
   "name": "vue-stomp-operator",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Vue Stomp and SockJS wrapper plugin",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
