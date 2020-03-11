@@ -1,4 +1,4 @@
-import { __assign } from "tslib";
+import { __assign, __awaiter, __generator } from "tslib";
 import SockJS from 'sockjs-client';
 import { Client as StompClient } from '@stomp/stompjs';
 import * as uuid from 'uuid';
@@ -13,6 +13,7 @@ var StompOperator = /** @class */ (function () {
         this.url = null;
         this.ws = null;
         this.timeout = 5000;
+        this.interceptors = {};
         this.onStompError = null;
         this.onError = null;
         this.onConnect = null;
@@ -20,6 +21,7 @@ var StompOperator = /** @class */ (function () {
         this._stomp = null;
         this._connected = false;
         this._pool = {};
+        this._remoteVersion = 0;
         this._subscribeList = [];
         this._oldSubscribeList = [];
         if (url) {
@@ -127,78 +129,145 @@ var StompOperator = /** @class */ (function () {
     };
     StompOperator.prototype.subscribe = function (endPoint, callback, error, isUniqueEndpoint) {
         var _this = this;
+        var _error = function (unit, err, responseEvent) {
+            var handled = false;
+            if (unit) {
+                if (unit.onError) {
+                    unit.onError(err, responseEvent);
+                    handled = true;
+                }
+            }
+            if (error) {
+                error(err, responseEvent);
+                handled = true;
+            }
+            if (!handled) {
+                throw err;
+            }
+        };
         if (this._stomp && this._stomp.connected) {
             var imi = this.isSubscribe(endPoint);
             if (isUniqueEndpoint && imi.length > 0) {
                 return null;
             }
-            var sub = this._stomp.subscribe(endPoint, function (message) {
-                var body = JSON.parse(message.body);
-                if (body === 'UNAUTHORIZED') {
-                    if (error) {
-                        error.call(null, 'UNAUTHORIZED');
+            var sub = this._stomp.subscribe(endPoint, function (message) { return __awaiter(_this, void 0, void 0, function () {
+                var version, body, responseEvent, mid, unit, interceptors, unit, mid;
+                return __generator(this, function (_a) {
+                    switch (_a.label) {
+                        case 0:
+                            version = message.headers['x-version'] ? parseInt(message.headers['x-version']) : 0;
+                            body = JSON.parse(message.body);
+                            responseEvent = {
+                                raw: message,
+                                status: 0,
+                                headers: message.headers,
+                                body: body
+                            };
+                            if (!this._remoteVersion && version)
+                                this._remoteVersion = version;
+                            if (!(version == 0)) return [3 /*break*/, 1];
+                            if (body === 'UNAUTHORIZED') {
+                                _error(undefined, Error('UNAUTHORIZED'), responseEvent);
+                                return [2 /*return*/];
+                            }
+                            mid = message.headers['_mid'];
+                            if (!mid && body.hasOwnProperty('_mid')) {
+                                mid = body._mid;
+                                Object.defineProperty(body, '_mid', {
+                                    enumerable: false,
+                                    configurable: false,
+                                    writable: false,
+                                    value: body._mid,
+                                });
+                            }
+                            if (mid && this._pool.hasOwnProperty(mid)) {
+                                unit = this._pool[mid];
+                                if (unit.timeout !== null) {
+                                    clearTimeout(unit.timeout);
+                                }
+                                unit.onReceive(Object.freeze(responseEvent));
+                            }
+                            return [3 /*break*/, 5];
+                        case 1:
+                            if (!(version == 1)) return [3 /*break*/, 5];
+                            interceptors = void 0;
+                            unit = undefined;
+                            mid = message.headers['x-mid'];
+                            responseEvent.status = parseInt(message.headers['x-status']);
+                            if (mid && this._pool.hasOwnProperty(mid)) {
+                                unit = this._pool[mid];
+                                delete this._pool[mid];
+                                interceptors = unit.sendOptions;
+                            }
+                            else {
+                                interceptors = this.interceptors;
+                            }
+                            if (!interceptors.response) return [3 /*break*/, 3];
+                            return [4 /*yield*/, interceptors.response(responseEvent)];
+                        case 2:
+                            responseEvent = _a.sent();
+                            _a.label = 3;
+                        case 3:
+                            if (!interceptors.validateStatus) {
+                                interceptors.validateStatus = function (r) { return ((r.status >= 200) && (r.status < 400)); };
+                            }
+                            return [4 /*yield*/, interceptors.validateStatus(responseEvent)];
+                        case 4:
+                            if (!(_a.sent())) {
+                                _error(unit, Error('Received failed response'), responseEvent);
+                                return [2 /*return*/];
+                            }
+                            if (unit) {
+                                unit.onReceive(Object.freeze(responseEvent));
+                            }
+                            _a.label = 5;
+                        case 5:
+                            if (callback) {
+                                callback.call(null, Object.freeze(responseEvent));
+                            }
+                            return [2 /*return*/];
                     }
-                    return;
-                }
-                var mid = message.headers['_mid'];
-                if (!mid && body.hasOwnProperty('_mid')) {
-                    mid = body._mid;
-                    Object.defineProperty(body, '_mid', {
-                        enumerable: false,
-                        configurable: false,
-                        writable: false,
-                        value: body._mid,
-                    });
-                }
-                if (mid && _this._pool.hasOwnProperty(mid)) {
-                    var unit = _this._pool[mid];
-                    if (unit.timeout !== null) {
-                        clearTimeout(unit.timeout);
-                    }
-                    unit.onReceive(Object.freeze(body));
-                }
-                if (callback) {
-                    callback.call(null, Object.freeze(body), message);
-                }
-            });
+                });
+            }); });
             if (sub) {
-                console.log('subscribe success: ' + endPoint);
                 this._subscribeList.push(__assign({ endpoint: endPoint }, sub));
             }
             return sub;
         }
     };
-    StompOperator.prototype.send = function (endPoint, data, header, timeout) {
+    StompOperator.prototype.send = function (endPoint, data, header, sendOptions) {
         var _this = this;
         var ctxId = uuid.v4();
         var _header = header || {};
         var $stomp = this._stomp;
-        var _timeout = timeout;
-        if (_timeout === undefined) {
-            _timeout = this.timeout;
-        }
+        var _sendOptions = sendOptions || {
+            timeout: this.timeout
+        };
         return new Promise(function (resolve, reject) {
             if (!($stomp && $stomp.connected)) {
                 reject('NOT CONNECTED');
                 return null;
             }
             if (!_this._pool.hasOwnProperty(ctxId)) {
-                $stomp.publish({
-                    destination: endPoint,
-                    headers: __assign({ _mid: ctxId }, _header),
-                    body: JSON.stringify(__assign({ _mid: ctxId }, data)),
-                });
-                var timeoutId = null;
-                if (_timeout !== null) {
+                var timeoutId = void 0;
+                if (_sendOptions.timeout) {
                     timeoutId = setTimeout(function () {
-                        reject('TIMEOUT');
+                        reject(Error('TIMEOUT'));
                         delete _this._pool[ctxId];
-                    }, _timeout);
+                    }, _sendOptions.timeout);
                 }
                 _this._pool[ctxId] = {
                     onReceive: function (message) { return resolve(message); },
+                    onError: function (e) { return reject(e); },
                     timeout: timeoutId,
+                    sendOptions: _sendOptions
                 };
+                var transformedBody = (_this._remoteVersion > 0) ? data : __assign({ _mid: ctxId }, data);
+                $stomp.publish({
+                    destination: endPoint,
+                    headers: __assign({ 'x-mid': ctxId }, _header),
+                    body: JSON.stringify(transformedBody),
+                });
             }
         });
     };

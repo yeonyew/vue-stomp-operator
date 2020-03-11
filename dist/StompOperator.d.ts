@@ -1,10 +1,10 @@
-import { Client as StompClient, IMessage } from '@stomp/stompjs';
-import { connectCallback, closeCallback, errorCallback, stompErrorCallback } from './types';
+import { Client as StompClient } from '@stomp/stompjs';
+import { connectCallback, closeCallback, errorCallback, stompErrorCallback, IInterceptors, ISendOptions, IResponseEvent } from './types';
 export interface MessageContext {
-    [id: string]: {
-        onReceive: (msg: IMessage | any) => any;
-        timeout: number | null;
-    };
+    onReceive: (responseEvent: IResponseEvent) => any;
+    onError: (e: any, responseEvent: IResponseEvent) => void;
+    timeout: any;
+    sendOptions: ISendOptions;
 }
 declare class StompOperator {
     get client(): StompClient | null;
@@ -16,6 +16,7 @@ declare class StompOperator {
     url: string | null;
     ws: WebSocket | null;
     timeout: number;
+    interceptors: IInterceptors;
     onStompError: stompErrorCallback | null;
     onError: errorCallback | null;
     onConnect: connectCallback | null;
@@ -23,6 +24,7 @@ declare class StompOperator {
     private _stomp;
     private _connected;
     private _pool;
+    private _remoteVersion;
     private _subscribeList;
     private _oldSubscribeList;
     constructor(url?: string);
@@ -30,7 +32,7 @@ declare class StompOperator {
     forceDisconnect(): void;
     deactivate(): void;
     isSubscribe(endPoint: string): any[];
-    subscribe(endPoint: string, callback?: (body: any, message?: IMessage) => any, error?: (err: any) => any, isUniqueEndpoint?: boolean): import("@stomp/stompjs").StompSubscription | null | undefined;
-    send(endPoint: string, data: any, header?: any, timeout?: number | null): Promise<any>;
+    subscribe(endPoint: string, callback?: (responseEvent: IResponseEvent) => any, error?: (err: any, responseEvent?: IResponseEvent) => any, isUniqueEndpoint?: boolean): import("@stomp/stompjs").StompSubscription | null | undefined;
+    send(endPoint: string, data: any, header?: any, sendOptions?: ISendOptions): Promise<any>;
 }
 export default StompOperator;
