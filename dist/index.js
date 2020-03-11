@@ -9,20 +9,19 @@ var VueStompOperator = /** @class */ (function (_super) {
     }
     VueStompOperator.install = function (Vue, args) {
         var name = args.name ? ('$' + args.name) : '$stomp';
-        if (Vue.prototype[name]) {
-            return;
+        if (!Vue.prototype[name]) {
+            var VSO_1 = new VueStompOperator(args.url);
+            Object.defineProperty(Vue.prototype, name, {
+                get: function () {
+                    return VSO_1;
+                },
+            });
+            Vue.mixin({
+                beforeCreate: function () {
+                    Vue.observable(VSO_1);
+                },
+            });
         }
-        var VSO = new VueStompOperator(args.url);
-        Object.defineProperty(Vue.prototype, name, {
-            get: function () {
-                return VSO;
-            },
-        });
-        Vue.mixin({
-            beforeCreate: function () {
-                Vue.observable(VSO);
-            },
-        });
     };
     return VueStompOperator;
 }(StompOperator));

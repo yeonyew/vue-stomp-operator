@@ -5,11 +5,11 @@ export * from './StompOperator'
 export * from './types'
 
 export default class VueStompOperator extends StompOperator {
-    public static install (Vue: typeof _Vue, args: {name?: string, url: string}): void {
-        const name = args.name ? ('$' + args.name) : '$stomp';
-        if (!Vue.prototype[name]) {
+    public static install (Vue: typeof _Vue, args: {name: string, url: string}): void {
+        const protoName = args.name ? ('$' + args.name) : '$stomp';
+        if (!Vue.prototype[protoName]) {
             const VSO = new VueStompOperator(args.url);
-            Object.defineProperty(Vue.prototype, name, {
+            Object.defineProperty(Vue.prototype, protoName, {
                 get () {
                     return VSO;
                 },
