@@ -9,10 +9,11 @@ function getProtocol(url) {
     return url.substr(0, pos);
 }
 var StompOperator = /** @class */ (function () {
-    function StompOperator(url) {
+    function StompOperator(url, conf) {
         this.url = null;
         this.ws = null;
         this.timeout = 5000;
+        this.conf = {};
         this.interceptors = {};
         this.onStompError = null;
         this.onError = null;
@@ -26,6 +27,7 @@ var StompOperator = /** @class */ (function () {
         this._oldSubscribeList = [];
         if (url) {
             this.url = url;
+            this.conf = conf || {};
         }
         return this;
     }
@@ -55,7 +57,7 @@ var StompOperator = /** @class */ (function () {
     });
     StompOperator.prototype.connect = function (onConnect) {
         var _this = this;
-        var stomp = this._stomp = new StompClient();
+        var stomp = this._stomp = new StompClient(this.conf);
         stomp.onConnect = function () {
             _this._connected = true;
             if (onConnect) {

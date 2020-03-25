@@ -15,6 +15,7 @@ import {
     ISendOptions,
     IResponseEvent
 } from './types'
+import {StompConfig} from "@stomp/stompjs/esm5/stomp-config";
 
 export interface MessageContext {
     onReceive: (responseEvent: IResponseEvent) => any,
@@ -50,6 +51,7 @@ class StompOperator {
     public url: string | null = null;
     public ws: WebSocket | null = null;
     public timeout: number = 5000;
+    public conf: StompConfig = {};
 
     public interceptors: IInterceptors = {};
 
@@ -65,15 +67,16 @@ class StompOperator {
     private _subscribeList: any[] = [];
     private _oldSubscribeList: any[] = [];
 
-    constructor (url?: string) {
+    constructor (url?: string, conf?: StompConfig) {
         if(url) {
             this.url = url;
+            this.conf = conf || {};
         }
         return this;
     }
 
     public connect (onConnect?: () => any) {
-        const stomp = this._stomp = new StompClient();
+        const stomp = this._stomp = new StompClient(this.conf);
         stomp.onConnect = () => {
             this._connected = true;
             if (onConnect) {

@@ -1,5 +1,6 @@
 import { Client as StompClient } from '@stomp/stompjs';
 import { connectCallback, closeCallback, errorCallback, stompErrorCallback, IInterceptors, ISendOptions, IResponseEvent } from './types';
+import { StompConfig } from "@stomp/stompjs/esm5/stomp-config";
 export interface MessageContext {
     onReceive: (responseEvent: IResponseEvent) => any;
     onError: (e: any, responseEvent: IResponseEvent) => void;
@@ -16,6 +17,7 @@ declare class StompOperator {
     url: string | null;
     ws: WebSocket | null;
     timeout: number;
+    conf: StompConfig;
     interceptors: IInterceptors;
     onStompError: stompErrorCallback | null;
     onError: errorCallback | null;
@@ -27,7 +29,7 @@ declare class StompOperator {
     private _remoteVersion;
     private _subscribeList;
     private _oldSubscribeList;
-    constructor(url?: string);
+    constructor(url?: string, conf?: StompConfig);
     connect(onConnect?: () => any): void;
     forceDisconnect(): void;
     deactivate(): void;
